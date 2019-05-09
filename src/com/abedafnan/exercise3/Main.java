@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.stream.Stream;
 
 public class Main {
 
@@ -32,28 +33,44 @@ public class Main {
         Statement statement = dbConnection.createStatement();
 
         // Insert invoices into the database
-//        insertIntoDB(invoices, statement);
+        insertIntoDB(invoices, statement);
 
         // Retrieve the invoice table content
         ArrayList<Invoice> retrievedInvoices = queryTheDB(statement);
         printHeader("Original");
-        retrievedInvoices.forEach(invoice -> printInvoice(invoice));
+        retrievedInvoices.forEach(Main::printInvoice);
         System.out.println();
 
         // Sort the list of invoices based on the description
         printHeader("Sorted by Description");
-        retrievedInvoices.stream().sorted(getComparator("desc")).forEach(invoice -> printInvoice(invoice));
+        retrievedInvoices.stream()
+                .sorted(Comparator.comparing(Invoice::getPartDescription))
+                .forEach(Main::printInvoice);
         System.out.println();
 
         // Sort the list of invoices based on the price
         printHeader("Sorted by Price");
-        retrievedInvoices.stream().sorted(getComparator("price")).forEach(invoice -> printInvoice(invoice));
+        retrievedInvoices.stream()
+                .sorted(Comparator.comparing(Invoice::getPrice))
+                .forEach(Main::printInvoice);
         System.out.println();
 
-        //
-//        printHeader("Mapped and Sorted by Quantity");
-//        retrievedInvoices.stream().map(Invoice::getQuantity).sorted().forEach(System.out::println);
+        // Map and sort the list of invoices based on the quantity
+        System.out.println("Sorted by Quantity:\n--------------------------------------");
+        retrievedInvoices.stream()
+                .sorted(Comparator.comparing(Invoice::getQuantity))
+                .flatMap(invoice -> Stream.of(invoice.getPartDescription(), invoice.getQuantity()))
+                .forEach(System.out::println);
+        System.out.println();
 
+        // Map, sort and filter the list of invoices based on the invoice value
+        System.out.println("Sorted and Filtered by Invoice Value:\n--------------------------------------");
+        retrievedInvoices.stream()
+                .sorted(Comparator.comparing(Invoice::getInvoiceValue))
+                .filter(invoice -> invoice.getInvoiceValue() >= 200 && invoice.getInvoiceValue() <= 500)
+                .flatMap(invoice -> Stream.of(invoice.getPartDescription(), invoice.getInvoiceValue()))
+                .forEach(System.out::println);
+        System.out.println();
     }
 
     /**
@@ -113,24 +130,6 @@ public class Main {
         System.out.println(title + ":\n------------------------------------------------------------");
         System.out.printf("%-15s %-20s %-15s %-15s\n------------------------------------------------------------\n"
                 , "Part Number", "Part Description", "Quantity", "Price");
-    }
-
-    private static Comparator<Invoice> getComparator(String sortBy) {
-        return new Comparator<Invoice>() {
-            @Override
-            public int compare(Invoice o1, Invoice o2) {
-                if (sortBy.equals("desc")) {
-                    return o1.getPartDescription().compareTo(o2.getPartDescription());
-                } else if (sortBy.equals("price")) {
-                    if (o1.getPrice() > o2.getPrice()) return 1;
-                    else if (o1.getPrice() < o2.getPrice()) return -1;
-                } else if (sortBy.equals("quantity")) {
-                    if (o1.getQuantity() > o2.getQuantity()) return 1;
-                    else if (o1.getQuantity() < o2.getQuantity()) return -1;
-                }
-                return 0;
-            }
-        };
     }
 
 }

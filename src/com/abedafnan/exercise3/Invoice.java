@@ -29,4 +29,8 @@ public class Invoice {
         return price;
     }
 
+    public double getInvoiceValue() {
+        return quantity * price;
+    }
+
 }
